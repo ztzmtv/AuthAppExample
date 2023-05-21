@@ -17,7 +17,7 @@ class BiometricAuthUseCase(
         object Success : AuthResult()
     }
 
-    interface Listener {
+    fun interface Listener {
         fun onBiometricAuthResult(result: AuthResult)
     }
 

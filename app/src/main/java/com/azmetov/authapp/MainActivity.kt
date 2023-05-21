@@ -10,18 +10,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var biometricAuthUseCase: BiometricAuthUseCase
     private lateinit var binding: ActivityMainBinding
 
-    private val listener: BiometricAuthUseCase.Listener = object : BiometricAuthUseCase.Listener {
-        override fun onBiometricAuthResult(result: BiometricAuthUseCase.AuthResult) {
-            when (result) {
-                is BiometricAuthUseCase.AuthResult.Cancelled -> {}
-                is BiometricAuthUseCase.AuthResult.Failed -> {}
-                is BiometricAuthUseCase.AuthResult.NotEnrolled -> {}
-                is BiometricAuthUseCase.AuthResult.NotSupported -> {}
-                is BiometricAuthUseCase.AuthResult.Success -> {}
-            }
-            //show result
-            Toast.makeText(this@MainActivity, result.javaClass.simpleName, Toast.LENGTH_LONG).show()
+    private val listener = BiometricAuthUseCase.Listener { result ->
+        when (result) {
+            is BiometricAuthUseCase.AuthResult.Cancelled -> {}
+            is BiometricAuthUseCase.AuthResult.Failed -> {}
+            is BiometricAuthUseCase.AuthResult.NotEnrolled -> {}
+            is BiometricAuthUseCase.AuthResult.NotSupported -> {}
+            is BiometricAuthUseCase.AuthResult.Success -> {}
         }
+        //show result
+        Toast.makeText(this@MainActivity, result.javaClass.simpleName, Toast.LENGTH_LONG).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
