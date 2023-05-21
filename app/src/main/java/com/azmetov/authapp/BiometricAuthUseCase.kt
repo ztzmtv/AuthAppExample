@@ -3,11 +3,16 @@ package com.azmetov.authapp
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 
 class BiometricAuthUseCase(
     private val activity: FragmentActivity,
     private val biometricManager: BiometricManager,
-) : Observable<BiometricAuthUseCase.Listener>() {
+) {
+    private val mutableLiveData = MutableLiveData<AuthResult>()
+    val liveData: LiveData<AuthResult> = mutableLiveData
+
 
     sealed class AuthResult {
         object NotEnrolled : AuthResult()
@@ -15,10 +20,6 @@ class BiometricAuthUseCase(
         data class Failed(val errorCode: Int, val errorMessage: String) : AuthResult()
         object Cancelled : AuthResult()
         object Success : AuthResult()
-    }
-
-    interface Listener {
-        fun onBiometricAuthResult(result: AuthResult)
     }
 
     private val biometricPrompt = BiometricPrompt(activity,
@@ -31,22 +32,17 @@ class BiometricAuthUseCase(
                     BiometricPrompt.ERROR_NEGATIVE_BUTTON
                 )
                 if (cancelled) {
-                    listeners.map { it.onBiometricAuthResult(AuthResult.Cancelled) }
+                    mutableLiveData.postValue(AuthResult.Cancelled)
                 } else {
-                    listeners.map {
-                        it.onBiometricAuthResult(
-                            AuthResult.Failed(
-                                errorCode,
-                                errString.toString()
-                            )
-                        )
-                    }
+                    mutableLiveData.postValue(
+                        AuthResult.Failed(errorCode, errString.toString())
+                    )
                 }
             }
 
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
-                listeners.map { it.onBiometricAuthResult(AuthResult.Success) }
+                mutableLiveData.postValue(AuthResult.Success)
             }
 
             override fun onAuthenticationFailed() {
@@ -61,12 +57,12 @@ class BiometricAuthUseCase(
             }
 
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
-                listeners.map { it.onBiometricAuthResult(AuthResult.NotEnrolled) }
+                mutableLiveData.postValue(AuthResult.NotEnrolled)
                 return
             }
 
             else -> {
-                listeners.map { it.onBiometricAuthResult(AuthResult.NotSupported) }
+                mutableLiveData.postValue(AuthResult.NotSupported)
                 return
             }
         }
