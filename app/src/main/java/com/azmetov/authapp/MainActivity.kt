@@ -6,9 +6,23 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import com.azmetov.authapp.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity(), BiometricAuthUseCase.Listener {
+class MainActivity : AppCompatActivity() {
     private lateinit var biometricAuthUseCase: BiometricAuthUseCase
     private lateinit var binding: ActivityMainBinding
+
+    private val listener: BiometricAuthUseCase.Listener = object : BiometricAuthUseCase.Listener {
+        override fun onBiometricAuthResult(result: BiometricAuthUseCase.AuthResult) {
+            when (result) {
+                is BiometricAuthUseCase.AuthResult.Cancelled -> {}
+                is BiometricAuthUseCase.AuthResult.Failed -> {}
+                is BiometricAuthUseCase.AuthResult.NotEnrolled -> {}
+                is BiometricAuthUseCase.AuthResult.NotSupported -> {}
+                is BiometricAuthUseCase.AuthResult.Success -> {}
+            }
+            //show result
+            Toast.makeText(this@MainActivity, result.javaClass.simpleName, Toast.LENGTH_LONG).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,12 +36,12 @@ class MainActivity : AppCompatActivity(), BiometricAuthUseCase.Listener {
 
     override fun onStart() {
         super.onStart()
-        biometricAuthUseCase.registerListener(this)
+        biometricAuthUseCase.registerListener(listener)
     }
 
     override fun onStop() {
         super.onStop()
-        biometricAuthUseCase.unregisterListener(this)
+        biometricAuthUseCase.unregisterListener(listener)
     }
 
     private fun authenticate() {
@@ -37,17 +51,4 @@ class MainActivity : AppCompatActivity(), BiometricAuthUseCase.Listener {
             "getString(R.string.cancel)",
         )
     }
-
-    override fun onBiometricAuthResult(result: BiometricAuthUseCase.AuthResult) {
-        when (result) {
-            is BiometricAuthUseCase.AuthResult.Cancelled -> {}
-            is BiometricAuthUseCase.AuthResult.Failed -> {}
-            is BiometricAuthUseCase.AuthResult.NotEnrolled -> {}
-            is BiometricAuthUseCase.AuthResult.NotSupported -> {}
-            is BiometricAuthUseCase.AuthResult.Success -> {}
-        }
-        //show result
-        Toast.makeText(this, result.javaClass.simpleName, Toast.LENGTH_LONG).show()
-    }
-
 }
