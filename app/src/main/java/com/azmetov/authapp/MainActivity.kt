@@ -1,68 +1,53 @@
 package com.azmetov.authapp
 
 import android.os.Bundle
-import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
-import java.util.concurrent.Executor
+import androidx.biometric.BiometricManager
+import com.azmetov.authapp.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var executor: Executor
-    private lateinit var biometricPrompt: BiometricPrompt
-    private lateinit var promptInfo: BiometricPrompt.PromptInfo
+class MainActivity : AppCompatActivity(), BiometricAuthUseCase.Listener {
+    private lateinit var biometricAuthUseCase: BiometricAuthUseCase
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater).also { setContentView(it.root) }
 
-        executor = ContextCompat.getMainExecutor(this)
-        biometricPrompt = BiometricPrompt(this, executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationError(
-                    errorCode: Int,
-                    errString: CharSequence
-                ) {
-                    super.onAuthenticationError(errorCode, errString)
-                    Toast.makeText(
-                        applicationContext,
-                        "Authentication error: $errString", Toast.LENGTH_SHORT
-                    )
-                        .show()
-                }
-
-                override fun onAuthenticationSucceeded(
-                    result: BiometricPrompt.AuthenticationResult
-                ) {
-                    super.onAuthenticationSucceeded(result)
-                    Toast.makeText(
-                        applicationContext,
-                        "Authentication succeeded!", Toast.LENGTH_SHORT
-                    )
-                        .show()
-                }
-
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    Toast.makeText(
-                        applicationContext, "Authentication failed",
-                        Toast.LENGTH_SHORT
-                    )
-                        .show()
-                }
-            })
-
-        promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Biometric login for my app")
-            .setSubtitle("Log in using your biometric credential")
-            .setNegativeButtonText("Use account password")
-            .build()
-
-        val biometricLoginButton = findViewById<Button>(R.id.button)
-        biometricLoginButton.setOnClickListener {
-            biometricPrompt.authenticate(promptInfo)
+        biometricAuthUseCase = BiometricAuthUseCase(this, BiometricManager.from(this))
+        binding.button.setOnClickListener {
+            authenticate()
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        biometricAuthUseCase.registerListener(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        biometricAuthUseCase.unregisterListener(this)
+    }
+
+    private fun authenticate() {
+        biometricAuthUseCase.authenticate(
+            "getString(R.string.biometric_auth_title)",
+            "getString(R.string.biometric_auth_description)",
+            "getString(R.string.cancel)",
+        )
+    }
+
+    override fun onBiometricAuthResult(result: BiometricAuthUseCase.AuthResult) {
+        when (result) {
+            is BiometricAuthUseCase.AuthResult.Cancelled -> {}
+            is BiometricAuthUseCase.AuthResult.Failed -> {}
+            is BiometricAuthUseCase.AuthResult.NotEnrolled -> {}
+            is BiometricAuthUseCase.AuthResult.NotSupported -> {}
+            is BiometricAuthUseCase.AuthResult.Success -> {}
+        }
+        //show result
+        Toast.makeText(this, result.javaClass.simpleName, Toast.LENGTH_LONG).show()
+    }
+
 }
